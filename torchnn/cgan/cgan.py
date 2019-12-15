@@ -36,3 +36,8 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(512, 1),
         )
+    
+    def forward(self, img, labels):
+        d_in = torch.cat((img.view(img.size(0), -1), self.label_embedding(labels)), -1)
+        validity = self.model(d_in)
+        return validity
