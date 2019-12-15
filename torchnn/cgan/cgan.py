@@ -23,3 +23,16 @@ class Generator(nn.Module):
         img = self.model(gen_input)
         img = img.view(img.size(0), *img_shape)
         return img
+
+class Discriminator(nn.Module):
+    def __init__(self, num_classes, dims):
+        super(Discriminator, self).__init__()
+        self.labels_emb = nn.Embedding(num_classes, num_classes)
+        self.model = nn.Sequential(
+            nn.Linear(num_classes + int(np.prod(img_shape)), 512),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(512, 512),
+            nn.Dropout(0.4),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(512, 1),
+        )
