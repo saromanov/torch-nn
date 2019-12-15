@@ -1,0 +1,8 @@
+torch>=0.4.0
+torchvision
+scikit-image
+matplotlib
+numpy
+scipy
+pillow
+urllib3
