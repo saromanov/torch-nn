@@ -65,3 +65,10 @@ trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
 
 optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.d1, opt.d2))
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.d1, opt.d2))
+
+for epoch in range(opt.n_epochs):
+    for i, (imgs, labels) in enumerate(dataloader):
+        batch_size = imgs.shape[0]
+        valid = Variable(FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
+        fake = Variable(FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
+
