@@ -71,4 +71,11 @@ for epoch in range(opt.n_epochs):
         batch_size = imgs.shape[0]
         valid = Variable(FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
         fake = Variable(FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
+        optimizer_G.zero_grad()
+        z = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, opt.latent_dim))))
+        gen_labels = Variable(LongTensor(np.random.randint(0, opt.n_classes, batch_size)))
+        gen_imgs = generator(z, gen_labels)
+        validity = discriminator(gen_imgs, gen_labels)
+        g_loss = adversarial_loss(validity, valid)
+
 
