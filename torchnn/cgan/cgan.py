@@ -35,11 +35,11 @@ class Generator(nn.Module):
         return img
 
 class Discriminator(nn.Module):
-    def __init__(self, num_classes, dims):
+    def __init__(self, num_classes, dims, shape):
         super(Discriminator, self).__init__()
         self.labels_emb = nn.Embedding(num_classes, num_classes)
         self.model = nn.Sequential(
-            nn.Linear(num_classes + int(np.prod(img_shape)), 512),
+            nn.Linear(num_classes + int(np.prod(shape)), 512),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(512, 512),
             nn.Dropout(0.4),
@@ -68,11 +68,7 @@ opt = parser.parse_args()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 adversarial_loss = torch.nn.MSELoss()
 generator = Generator(opt.classes, opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
-discriminator = Discriminator()
-
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=2)
-
+discriminator = Discriminator(opt.classes, opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
 
 optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.d1, opt.d2))
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.d1, opt.d2))
