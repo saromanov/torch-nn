@@ -80,6 +80,24 @@ for epoch in range(opt.n_epochs):
 
         optimizer_D.zero_grad()
         disk_images = discriminator(images, labels)
-        a_loss = adversarial_loss(validity, valid)
+        a_loss_real = adversarial_loss(validity, valid)
+
+        validity_fake = discriminator(gen_imgs.detach(), gen_labels)
+        a_loss_fake = adversarial_loss(validity_fake, fake)
+
+        d_loss = (d_real_loss + d_fake_loss) / 2
+
+        d_loss.backward()
+        optimizer_D.step()
+
+        print(
+            "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
+            % (epoch, opt.n_epochs, i, len(dataloader), d_loss.item(), g_loss.item())
+        )
+
+        batches_done = epoch * len(dataloader) + i
+        if batches_done % opt.sample_interval == 0:
+            sample_image(n_row=10, batches_done=batches_done)
+
 
 
