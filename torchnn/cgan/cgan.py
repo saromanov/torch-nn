@@ -11,18 +11,18 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
         self.labels_emb = nn.Embedding(num_classes, num_classes)
         self.model = nn.Sequential(
-            *block(dims + num_classes, 128, normalize=False),
-            *block(128, 256),
-            *block(256, 512),
-            *block(512, 1024),
+            *self._block(dims + num_classes, 128, normalize=False),
+            *self._block(128, 256),
+            *self._block(256, 512),
+            *self._block(512, 1024),
             nn.Linear(1024, int(np.prod(img_shape))),
             nn.Tanh()
         )
     
-    def _block(self, in_data, out_data, normalize=True):
-        layers = [nn.Linear(in_feat, out_feat)]
+    def _block(self, in_features, out_features, normalize=True):
+        layers = [nn.Linear(in_features, out_features)]
         if normalize:
-            layers.append(nn.BatchNorm1d(out_feat, 0.8))
+            layers.append(nn.BatchNorm1d(out_features, 0.8))
         layers.append(nn.LeakyReLU(0.2, inplace=True))
         return layers
     
