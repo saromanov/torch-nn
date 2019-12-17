@@ -1,3 +1,4 @@
+import argparse
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -17,6 +18,13 @@ class Generator(nn.Module):
             nn.Linear(1024, int(np.prod(img_shape))),
             nn.Tanh()
         )
+    
+    def _block(self, in_data, out_data, normalize=True):
+        layers = [nn.Linear(in_feat, out_feat)]
+        if normalize:
+            layers.append(nn.BatchNorm1d(out_feat, 0.8))
+        layers.append(nn.LeakyReLU(0.2, inplace=True))
+        return layers
     
     def forward(self, noise, labels):
         gen_input = torch.cat((self.labels_emb(labels), noise), -1)
@@ -55,8 +63,7 @@ opt = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 adversarial_loss = torch.nn.MSELoss()
-
-generator = Generator()
+generator = Generator(opt.classes, opt.latent_dim)
 discriminator = Discriminator()
 
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
