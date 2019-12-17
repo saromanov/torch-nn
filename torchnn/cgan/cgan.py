@@ -78,4 +78,8 @@ for epoch in range(opt.n_epochs):
         validity = discriminator(gen_imgs, gen_labels)
         g_loss = adversarial_loss(validity, valid)
 
+        optimizer_D.zero_grad()
+        disk_images = discriminator(images, labels)
+        a_loss = adversarial_loss(validity, valid)
+
 
