@@ -5,17 +5,19 @@ import torchvision.transforms as transforms
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import numpy as np
 
 class Generator(nn.Module):
-    def __init__(self, num_classes, dims):
+    def __init__(self, num_classes, dims, shape):
         super(Generator, self).__init__()
+        self._shape = shape
         self.labels_emb = nn.Embedding(num_classes, num_classes)
         self.model = nn.Sequential(
             *self._block(dims + num_classes, 128, normalize=False),
             *self._block(128, 256),
             *self._block(256, 512),
             *self._block(512, 1024),
-            nn.Linear(1024, int(np.prod(img_shape))),
+            nn.Linear(1024, int(np.prod(self._shape))),
             nn.Tanh()
         )
     
@@ -59,11 +61,13 @@ parser.add_argument("--d2", type=float, default=0.999, help="adam: decay of firs
 parser.add_argument("--cpus", type=int, default=8, help="number of cpu threads to use during batch generation")
 parser.add_argument("--latent_dim", type=int, default=100, help="dimensionality of the latent space")
 parser.add_argument("--classes", type=int, default=10, help="number of classes for dataset")
+parser.add_argument("--channels", type=int, default=1, help="image channels")
+parser.add_argument("--img_size", type=int, default=32, help="size of each image dimension")
 opt = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 adversarial_loss = torch.nn.MSELoss()
-generator = Generator(opt.classes, opt.latent_dim)
+generator = Generator(opt.classes, opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
 discriminator = Discriminator()
 
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
