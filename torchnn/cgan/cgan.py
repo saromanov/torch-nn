@@ -76,6 +76,7 @@ discriminator = Discriminator(opt.classes, opt.latent_dim, (opt.channels, opt.im
 
 trainset = datasets.MNIST('../data', train=True, download=True,
                        transform=transforms.Compose([
+                           transforms.Resize(opt.img_size),
                            transforms.ToTensor(),
                            transforms.Normalize((0.1307,), (0.3081,))
                        ]))
