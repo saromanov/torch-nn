@@ -9,6 +9,8 @@ from torch.autograd import Variable
 import numpy as np
 
 class Generator(nn.Module):
+    ''' Definition of the generator class
+    '''
     def __init__(self, num_classes, dims, shape):
         super(Generator, self).__init__()
         self._shape = shape
