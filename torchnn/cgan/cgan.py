@@ -48,6 +48,8 @@ class Discriminator(nn.Module):
             nn.Linear(512, 512),
             nn.Dropout(0.4),
             nn.LeakyReLU(0.2, inplace=True),
+            nn.Linear(512, 512),
+            nn.Softplus(0.5),
             nn.Linear(512, 1),
         )
     
