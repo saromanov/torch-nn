@@ -110,19 +110,19 @@ for epoch in range(opt.epochs):
         validity_fake = discriminator(gen_imgs.detach(), gen_labels)
         a_loss_fake = adversarial_loss(validity_fake, fake)
 
-        d_loss = (d_real_loss + d_fake_loss) / 2
+        d_loss = (a_loss_real + a_loss_fake) / 2
 
         d_loss.backward()
         optimizer_D.step()
 
         print(
             "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
-            % (epoch, opt.n_epochs, i, len(dataloader), d_loss.item(), g_loss.item())
+            % (epoch, opt.epochs, i, len(trainloader), d_loss.item(), g_loss.item())
         )
 
-        batches_done = epoch * len(dataloader) + i
-        if batches_done % opt.sample_interval == 0:
-            sample_image(n_row=10, batches_done=batches_done)
+        batches_done = epoch * len(trainloader) + i
+        #if batches_done % opt.sample_interval == 0:
+        #    sample_image(n_row=10, batches_done=batches_done)
 
 
 
