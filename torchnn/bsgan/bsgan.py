@@ -90,24 +90,25 @@ optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt
 
 for epoch in range(opt.epochs):
     for i, (imgs, labels) in enumerate(trainloader):
-        batch_size = imgs.shape[0]
+        image = Variable(imgs.type(Tensor))
 
-        valid = Variable(torch.FloatTensor(imgs.shape[0], 1).fill_(1.0), requires_grad=False)
-        fake = Variable(torch.FloatTensor(imgs.shape[0], 1).fill_(0.0), requires_grad=False)
+        valid = Variable(torch.FloatTensor().fill_(1.0), requires_grad=False)
+        fake = Variable(torch.FloatTensor().fill_(0.0), requires_grad=False)
         img = Variable(imgs.type(torch.FloatTensor))
         optimizer_G.zero_grad()
 
-        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, opt.latent_dim))))
+        # Sample noice
+        z = Variable(torch.FloatTensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim))))
         gen_imgs = generator(z)
         bs_loss = boundary_loss(discriminator(gen_imgs), valid)
-        validity = discriminator(gen_imgs)
-        g_loss = adversarial_loss(validity, valid)
-
+        bs_loss.backward()
+        optimizer_G.step()
         optimizer_D.zero_grad()
-        disk_images = discriminator(img, labels)
-        a_loss_real = adversarial_loss(validity, valid)
 
-        validity_fake = discriminator(gen_imgs.detach(), gen_labels)
+        validity_real = discriminator(image)
+        a_loss_real = adversarial_loss(validity_real, valid)
+
+        validity_fake = discriminator(gen_imgs.detach())
         a_loss_fake = adversarial_loss(validity_fake, fake)
 
         d_loss = 0.5 * (a_loss_real + a_loss_fake)
