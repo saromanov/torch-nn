@@ -24,10 +24,9 @@ class Generator(nn.Module):
             nn.Tanh()
         )
     
-    def _block(self, in_features, out_features, normalize=True):
+    def _block(self, in_features, out_features, batch_norm=0.8):
         layers = [nn.Linear(in_features, out_features)]
-        if normalize:
-            layers.append(nn.BatchNorm1d(out_features, 0.8))
+        layers.append(nn.BatchNorm1d(out_features, 0.8))
         layers.append(nn.LeakyReLU(0.2, inplace=True))
         return layers
     
@@ -49,7 +48,7 @@ class Discriminator(nn.Module):
             nn.Dropout(0.4),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(512, 512),
-            nn.Softplus(0.5),
+            nn.Sigmoid(),
             nn.Linear(512, 1),
         )
     
