@@ -14,7 +14,6 @@ class Generator(nn.Module):
     def __init__(self, num_classes, dims, shape):
         super(Generator, self).__init__()
         self._shape = shape
-        self.labels_emb = nn.Embedding(num_classes, num_classes)
         self.model = nn.Sequential(
             *self._block(dims + num_classes, 128, normalize=False),
             *self._block(128, 256),
@@ -30,9 +29,8 @@ class Generator(nn.Module):
         layers.append(nn.LeakyReLU(0.2, inplace=True))
         return layers
     
-    def forward(self, noise, labels):
-        gen_input = torch.cat((self.labels_emb(labels), noise), -1)
-        img = self.model(gen_input)
+    def forward(self, x):
+        img = self.model(x)
         img = img.view(img.size(0), *self._shape)
         return img
 
@@ -52,10 +50,8 @@ class Discriminator(nn.Module):
             nn.Linear(512, 1),
         )
     
-    def forward(self, img, labels):
-        d_in = torch.cat((img.view(img.size(0), -1), self._labels_emb(labels)), -1)
-        validity = self.model(d_in)
-        return validity
+    def forward(self, img):
+        return self.model(img.view(img.size(0), -1))
 
 def boundary_loss(valid, pred):
     return 0.5 * torch.mean((torch.log(pred) - K.log(pred))**2)
@@ -98,14 +94,12 @@ for epoch in range(opt.epochs):
         valid = Variable(torch.FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
         fake = Variable(torch.FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
         img = Variable(imgs.type(torch.FloatTensor))
-        labels = Variable(labels.type(torch.LongTensor))
         optimizer_G.zero_grad()
 
         z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, opt.latent_dim))))
-        gen_labels = Variable(torch.LongTensor(np.random.randint(0, opt.classes, batch_size)))
-        gen_imgs = generator(z, gen_labels)
-        bs_loss = boundary_loss(discriminator(gen_imgs, gen_labels), valid)
-        validity = discriminator(gen_imgs, gen_labels)
+        gen_imgs = generator(z)
+        bs_loss = boundary_loss(discriminator(gen_imgs), valid)
+        validity = discriminator(gen_imgs)
         g_loss = adversarial_loss(validity, valid)
 
         optimizer_D.zero_grad()
@@ -115,7 +109,7 @@ for epoch in range(opt.epochs):
         validity_fake = discriminator(gen_imgs.detach(), gen_labels)
         a_loss_fake = adversarial_loss(validity_fake, fake)
 
-        d_loss = (a_loss_real + a_loss_fake) / 2
+        d_loss = 0.5 * (a_loss_real + a_loss_fake)
 
         d_loss.backward()
         optimizer_D.step()
