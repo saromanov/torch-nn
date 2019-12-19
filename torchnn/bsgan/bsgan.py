@@ -15,7 +15,7 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
         self._shape = shape
         self.model = nn.Sequential(
-            *self._block(dims + num_classes, 128, normalize=False),
+            *self._block(dims + num_classes, 128),
             *self._block(128, 256),
             *self._block(256, 512),
             *self._block(512, 1024),
@@ -51,7 +51,8 @@ class Discriminator(nn.Module):
         )
     
     def forward(self, img):
-        return self.model(img.view(img.size(0), -1))
+        data = img.view(img.shape[0], -1)
+        return self.model(data, -1)
 
 def boundary_loss(valid, pred):
     return 0.5 * torch.mean((torch.log(pred) - K.log(pred))**2)
@@ -91,8 +92,8 @@ for epoch in range(opt.epochs):
     for i, (imgs, labels) in enumerate(trainloader):
         batch_size = imgs.shape[0]
 
-        valid = Variable(torch.FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
-        fake = Variable(torch.FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
+        valid = Variable(torch.FloatTensor(imgs.shape[0], 1).fill_(1.0), requires_grad=False)
+        fake = Variable(torch.FloatTensor(imgs.shape[0], 1).fill_(0.0), requires_grad=False)
         img = Variable(imgs.type(torch.FloatTensor))
         optimizer_G.zero_grad()
 
