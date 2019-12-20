@@ -11,11 +11,11 @@ import numpy as np
 class Generator(nn.Module):
     ''' Definition of the generator class
     '''
-    def __init__(self, num_classes, dims, shape):
+    def __init__(self, latent_dim, shape):
         super(Generator, self).__init__()
         self._shape = shape
         self.model = nn.Sequential(
-            *self._block(dims + num_classes, 128),
+            *self._block(latent_dim, 128),
             *self._block(128, 256),
             *self._block(256, 512),
             *self._block(512, 1024),
@@ -35,12 +35,11 @@ class Generator(nn.Module):
         return img
 
 class Discriminator(nn.Module):
-    def __init__(self, num_classes, dims, shape):
+    def __init__(self, dims, shape):
         super(Discriminator, self).__init__()
         self._shape = shape
-        self._labels_emb = nn.Embedding(num_classes, num_classes)
         self.model = nn.Sequential(
-            nn.Linear(num_classes + int(np.prod(shape)), 512),
+            nn.Linear(int(np.prod(shape)), 512),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(512, 512),
             nn.Dropout(0.4),
@@ -52,10 +51,10 @@ class Discriminator(nn.Module):
     
     def forward(self, img):
         data = img.view(img.shape[0], -1)
-        return self.model(data, -1)
+        return self.model(data)
 
 def boundary_loss(valid, pred):
-    return 0.5 * torch.mean((torch.log(pred) - K.log(pred))**2)
+    return 0.5 * torch.mean((torch.log(pred) - torch.log(pred))**2)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
@@ -70,10 +69,9 @@ parser.add_argument("--channels", type=int, default=1, help="image channels")
 parser.add_argument("--img_size", type=int, default=32, help="size of each image dimension")
 opt = parser.parse_args()
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 adversarial_loss = torch.nn.MSELoss()
-generator = Generator(opt.classes, opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
-discriminator = Discriminator(opt.classes, opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
+generator = Generator(opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
+discriminator = Discriminator(opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
 
 trainset = datasets.MNIST('../data', train=True, download=True,
                        transform=transforms.Compose([
@@ -89,11 +87,11 @@ optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.d1,
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.d1, opt.d2))
 
 for epoch in range(opt.epochs):
-    for i, (imgs, labels) in enumerate(trainloader):
+    for i, (imgs, _) in enumerate(trainloader):
         image = Variable(imgs.type(torch.FloatTensor))
 
-        valid = Variable(torch.FloatTensor().fill_(1.0), requires_grad=False)
-        fake = Variable(torch.FloatTensor().fill_(0.0), requires_grad=False)
+        valid = Variable(torch.FloatTensor(imgs.shape[0], 1).fill_(1.0), requires_grad=False)
+        fake = Variable(torch.FloatTensor(imgs.shape[0], 1).fill_(0.0), requires_grad=False)
         img = Variable(imgs.type(torch.FloatTensor))
         optimizer_G.zero_grad()
 
