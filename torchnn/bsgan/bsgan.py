@@ -90,7 +90,7 @@ optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt
 
 for epoch in range(opt.epochs):
     for i, (imgs, labels) in enumerate(trainloader):
-        image = Variable(imgs.type(Tensor))
+        image = Variable(imgs.type(torch.FloatTensor))
 
         valid = Variable(torch.FloatTensor().fill_(1.0), requires_grad=False)
         fake = Variable(torch.FloatTensor().fill_(0.0), requires_grad=False)
