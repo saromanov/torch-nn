@@ -53,8 +53,8 @@ class Discriminator(nn.Module):
         data = img.view(img.shape[0], -1)
         return self.model(data)
 
-def boundary_loss(valid, pred):
-    return 0.5 * torch.mean((torch.log(pred) - torch.log(pred))**2)
+def boundary_loss(valid):
+    return 0.5 * torch.mean((torch.log(valid) - torch.log(1 - valid))**2)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
@@ -98,7 +98,7 @@ for epoch in range(opt.epochs):
         # Sample noice
         z = Variable(torch.FloatTensor(np.random.normal(0, 1, (imgs.shape[0], opt.latent_dim))))
         gen_imgs = generator(z)
-        bs_loss = boundary_loss(discriminator(gen_imgs), valid)
+        bs_loss = boundary_loss(discriminator(gen_imgs))
         bs_loss.backward()
         optimizer_G.step()
         optimizer_D.zero_grad()
@@ -116,7 +116,7 @@ for epoch in range(opt.epochs):
 
         print(
             "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
-            % (epoch, opt.epochs, i, len(trainloader), d_loss.item(), g_loss.item())
+            % (epoch, opt.epochs, i, len(trainloader), d_loss.item(), bs_loss.item())
         )
 
         batches_done = epoch * len(trainloader) + i
