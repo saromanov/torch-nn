@@ -14,4 +14,5 @@ class VAE(nn.Module):
         return nn.Linear(in_features, out_features)
     
     def encode(self, x):
-        hidden = F.relu(x)
+        hidden = F.relu(self.layer1(x))
+        return self.layer2(hidden), self.layer3(hidden)
