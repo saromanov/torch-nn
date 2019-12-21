@@ -20,6 +20,11 @@ class VAE(nn.Module):
     def _decode(self, x):
         return torch.sigmoid(self.layer5(F.relu(self.layer4(x))))
     
+    def _reparameterize(self, mu, logvar):
+        std = torch.exp(0.5*logvar)
+        eps = torch.randn_like(std)
+        return mu + eps*std
+    
     def forward(self, x):
         mu, logvar = self._encode(x)
         z = self._reparameterize(mu, logvar)
