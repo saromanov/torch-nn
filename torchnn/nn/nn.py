@@ -22,7 +22,7 @@ y = torch.randn(10000, 20)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = NN(100,50,20).to(device)
-loss = nn.MSELoss(reduction='sum')
+loss = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 for i in range(1000):
