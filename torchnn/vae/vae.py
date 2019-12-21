@@ -51,16 +51,20 @@ discriminator = Discriminator(opt.classes, opt.latent_dim, (opt.channels, opt.im
 
 trainset = datasets.MNIST('../data', train=True, download=True,
                        transform=transforms.Compose([
-                           transforms.Resize(opt.img_size),
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
-                       ]))
+                           transforms.ToTensor())
+                       ])
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
 
 
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.d1, opt.d2))
+test_loader = torch.utils.data.DataLoader(
+    datasets.MNIST('../data', train=False, transform=transforms.ToTensor()),
+    batch_size=args.batch_size, shuffle=True, **kwargs)
+optimizer = torch.optim.Adam(lr=opt.lr)
 
 for epoch in range(opt.epochs):
-    for i, (imgs, labels) in enumerate(trainloader):
-        pass
+    for i, (imgs, _) in enumerate(trainloader):
+        optimizer.zero_grad()
+        recon_batch, mu, logvar = model(data)
+        loss = loss_function(recon_batch, data, mu, logvar)
+        loss.backward()
