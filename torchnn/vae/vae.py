@@ -68,3 +68,7 @@ for epoch in range(opt.epochs):
         recon_batch, mu, logvar = model(data)
         loss = loss_function(recon_batch, data, mu, logvar)
         loss.backward()
+        train_loss += loss.item()
+        optimizer.step()
+        print('====> Epoch: {} Average loss: {:.4f}'.format(
+          epoch, train_loss / len(train_loader.dataset)))
