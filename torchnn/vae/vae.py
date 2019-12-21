@@ -14,3 +14,6 @@ class VAE(nn.Module):
     
     def _block(self, in_features, out_features, batch_norm=0.8):
         return nn.Linear(in_features, out_features)
+    
+    def encode(self, x):
+        hidden = F.relu(x)
