@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 
 class VAE(nn.Module):
     def __init__(self, input_dim):
-        super(Generator, self).__init__()
+        super(VAE, self).__init__()
         self.layer1 = self._block(input_dim, 300)
         self.layer2 = self._block(300, 20)
         self.layer3 = self._block(300, 20)
@@ -30,10 +30,14 @@ class VAE(nn.Module):
         return mu + eps*std
     
     def forward(self, x):
-        mu, logvar = self._encode(x)
+        mu, logvar = self._encode(x.view(-1, 784))
         z = self._reparameterize(mu, logvar)
         return self._decode(z), mu, logvar
 
+def loss_function(recon_x, x, mu, logvar):
+    BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return BCE + KLD
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
@@ -59,16 +63,20 @@ trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
 
 test_loader = torch.utils.data.DataLoader(
     datasets.MNIST('../data', train=False, transform=transforms.ToTensor()),
-    batch_size=args.batch_size, shuffle=True, **kwargs)
-optimizer = torch.optim.Adam(lr=opt.lr)
+    batch_size=opt.batch_size, shuffle=True)
+
+model = VAE(784).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
 
 for epoch in range(opt.epochs):
+    model.train()
+    train_loss = 0
     for i, (imgs, _) in enumerate(trainloader):
         optimizer.zero_grad()
-        recon_batch, mu, logvar = model(data)
-        loss = loss_function(recon_batch, data, mu, logvar)
+        recon_batch, mu, logvar = model(imgs)
+        loss = loss_function(recon_batch, imgs, mu, logvar)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
         print('====> Epoch: {} Average loss: {:.4f}'.format(
-          epoch, train_loss / len(train_loader.dataset)))
+          epoch, train_loss / len(trainloader.dataset)))
