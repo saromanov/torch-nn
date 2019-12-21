@@ -13,9 +13,14 @@ class VAE(nn.Module):
     def _block(self, in_features, out_features, batch_norm=0.8):
         return nn.Linear(in_features, out_features)
     
-    def encode(self, x):
+    def _encode(self, x):
         hidden = F.relu(self.layer1(x))
         return self.layer2(hidden), self.layer3(hidden)
     
-    def decode(self, x):
+    def _decode(self, x):
         return torch.sigmoid(self.layer5(F.relu(self.layer4(x))))
+    
+    def forward(self, x):
+        mu, logvar = self._encode(x)
+        z = self._reparameterize(mu, logvar)
+        return self._decode(z), mu, logvar
