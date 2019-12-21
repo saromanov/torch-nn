@@ -16,3 +16,6 @@ class VAE(nn.Module):
     def encode(self, x):
         hidden = F.relu(self.layer1(x))
         return self.layer2(hidden), self.layer3(hidden)
+    
+    def decode(self, x):
+        return torch.sigmoid(self.layer5(F.relu(self.layer4(x))))
