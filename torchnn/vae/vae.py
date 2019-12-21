@@ -1,5 +1,9 @@
+import argparse
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision import datasets
+import torchvision.transforms as transforms
 
 class VAE(nn.Module):
     def __init__(self, input_dim):
@@ -45,14 +49,10 @@ parser.add_argument("--img_size", type=int, default=32, help="size of each image
 opt = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-adversarial_loss = torch.nn.MSELoss()
-generator = Generator(opt.classes, opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
-discriminator = Discriminator(opt.classes, opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
-
 trainset = datasets.MNIST('../data', train=True, download=True,
                        transform=transforms.Compose([
-                           transforms.ToTensor())
-                       ])
+                           transforms.ToTensor()
+                       ]))
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
 
