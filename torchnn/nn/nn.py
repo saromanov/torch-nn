@@ -10,10 +10,12 @@ class NN(nn.Module):
         super(NN, self).__init__()
         self.model = nn.Sequential(
             nn.Linear(inp,hidd),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Linear(hidd, out)
         )
     
+    def _make_module(self, layers):
+        return 
     def forward(self, x):
         return self.model(x)
 
