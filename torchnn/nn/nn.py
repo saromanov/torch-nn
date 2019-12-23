@@ -9,13 +9,14 @@ class NN(nn.Module):
     def __init__(self, inp, hidd, out):
         super(NN, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(inp,hidd),
-            nn.LeakyReLU(0.2),
-            nn.Linear(hidd, out)
+            *self._make_module(inp,hidd),
+            *self._make_module(hidd,out),
+            nn.Tanh()
         )
     
-    def _make_module(self, layers):
-        return 
+    def _make_module(self, inNum, outNum):
+        return [nn.Linear(inNum,outNum), nn.LeakyReLU(0.2)]
+    
     def forward(self, x):
         return self.model(x)
 
