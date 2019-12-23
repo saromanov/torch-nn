@@ -11,7 +11,7 @@ class NN(nn.Module):
         self.model = nn.Sequential(
             *self._make_module(inp,hidd),
             *self._make_module(hidd,out),
-            nn.Tanh()
+            nn.Sigmoid()
         )
     
     def _make_module(self, inNum, outNum):
