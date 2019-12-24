@@ -13,7 +13,7 @@ class Autoencoder(nn.Module):
             *self._block(params),
         )
         self.decoder =  nn.Sequential(
-            *self._block(reversed(list(map(lambda x: (x[1], x[0]), params)))),
+            *self._block(list(reversed(list(map(lambda x: (x[1], x[0]), params))))),
             nn.Tanh()
         )
     
@@ -28,11 +28,6 @@ class Autoencoder(nn.Module):
         x = self.encoder(x)
         return self.decoder(x)
 
-img_transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-])
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
@@ -42,25 +37,28 @@ parser.add_argument("--out_dim", type=int, default=20, help="dimensionality of t
 parser.add_argument("--params", type=list, default=[(784,128), (128,64), (64,12), (12,3)], help="dimensionality of the output space")
 opt = parser.parse_args()
 
-dataset = datasets.MNIST('./data', transform=img_transform, download=True)
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True)
+trainset = datasets.MNIST('../data', train=True, download=True,
+                       transform=transforms.Compose([
+                           transforms.ToTensor()
+                       ]))
+dataloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+                                          shuffle=True, num_workers=2)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = Autoencoder(opt.params).to(device)
 loss = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
 for i in range(opt.epochs):
     for data in dataloader:
         img, _ = data
         img = img.view(img.size(0), -1)
-        img = Variable(img).cuda()
 
         output = model(img)
-        loss_fn = criterion(output, img)
+        loss_fn = loss(output, img)
         optimizer.zero_grad()
         loss_fn.backward()
         optimizer.step()
         print('epoch [{}/{}], loss:{:.4f}'
-          .format(i + 1, num_epochs, loss_fn.data[0]))
+          .format(i + 1, opt.epochs, loss_fn))
