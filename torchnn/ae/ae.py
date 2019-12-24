@@ -4,6 +4,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets
 import torchvision.transforms as transforms
+from torchvision.utils import save_image
+
+if not os.path.exists('./mlp_img'):
+    os.mkdir('./mlp_img')
+
+def to_img(x):
+    x = 0.5 * (x + 1)
+    x = x.clamp(0, 1)
+    x = x.view(x.size(0), 1, 28, 28)
+    return x
 
 class Autoencoder(nn.Module):
     def __init__(self, params):
@@ -62,3 +72,5 @@ for i in range(opt.epochs):
         optimizer.step()
         print('epoch [{}/{}], loss:{:.4f}'
           .format(i + 1, opt.epochs, loss_fn))
+    pic = to_img(output.cpu().data)
+    save_image(pic, './mlp_img/image_{}.png'.format(i))
