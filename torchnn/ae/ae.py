@@ -49,6 +49,15 @@ loss = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
 for i in range(opt.epochs):
-    optimizer.zero_grad()
-    loss_fn.backward()
-    optimizer.step()
+    for data in dataloader:
+        img, _ = data
+        img = img.view(img.size(0), -1)
+        img = Variable(img).cuda()
+
+        output = model(img)
+        loss_fn = criterion(output, img)
+        optimizer.zero_grad()
+        loss_fn.backward()
+        optimizer.step()
+        print('epoch [{}/{}], loss:{:.4f}'
+          .format(i + 1, num_epochs, loss_fn.data[0]))
