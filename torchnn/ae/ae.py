@@ -10,19 +10,19 @@ class Autoencoder(nn.Module):
         super(Autoencoder, self).__init__()
 
         self.encoder = nn.Sequential(
-            *self._block(params, normalize=False),
+            *self._block(params),
         )
         self.decoder =  nn.Sequential(
-            *self._block(list(reversed(map(lambda x: (x[1], x[0]), params))), normalize=False),
+            *self._block(reversed(list(map(lambda x: (x[1], x[0]), params)))),
             nn.Tanh()
         )
     
-     def _block(self, layers_inp):
-         layers = []
-         for layer in layers_inp:
-             layers.append(nn.Linear(layer[0], layer[1]))
-             layers.append(nn.LeakyReLU(0.2, inplace=True))
-         return layers
+    def _block(self, layers_inp):
+        layers = []
+        for layer in layers_inp:
+            layers.append(nn.Linear(layer[0], layer[1]))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+        return layers
         
     def forward(self, x):
         x = self.encoder(x)
@@ -33,18 +33,21 @@ img_transform = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-dataset = MNIST('./data', transform=img_transform)
-dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
+parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
 parser.add_argument("--input_dim", type=int, default=100, help="dimensionality of the input space")
 parser.add_argument("--hidden_dim", type=int, default=50, help="dimensionality of the hidden space")
 parser.add_argument("--out_dim", type=int, default=20, help="dimensionality of the output space")
+parser.add_argument("--params", type=list, default=[(784,128), (128,64), (64,12), (12,3)], help="dimensionality of the output space")
 opt = parser.parse_args()
 
+dataset = datasets.MNIST('./data', transform=img_transform, download=True)
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True)
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = Autoencoder().to(device)
+model = Autoencoder(opt.params).to(device)
 loss = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
