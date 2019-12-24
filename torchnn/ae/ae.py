@@ -13,11 +13,7 @@ class Autoencoder(nn.Module):
             *self._block(params, normalize=False),
         )
         self.decoder =  nn.Sequential(
-            *self._block(dims + num_classes, 128, normalize=False),
-            *self._block(128, 256),
-            *self._block(256, 512),
-            *self._block(512, 1024),
-            nn.Linear(1024, int(np.prod(self._shape))),
+            *self._block(list(reversed(map(lambda x: (x[1], x[0]), params))), normalize=False),
             nn.Tanh()
         )
     
@@ -27,3 +23,32 @@ class Autoencoder(nn.Module):
              layers.append(nn.Linear(layer[0], layer[1]))
              layers.append(nn.LeakyReLU(0.2, inplace=True))
          return layers
+        
+    def forward(self, x):
+        x = self.encoder(x)
+        return self.decoder(x)
+
+img_transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+])
+
+dataset = MNIST('./data', transform=img_transform)
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
+parser.add_argument("--input_dim", type=int, default=100, help="dimensionality of the input space")
+parser.add_argument("--hidden_dim", type=int, default=50, help="dimensionality of the hidden space")
+parser.add_argument("--out_dim", type=int, default=20, help="dimensionality of the output space")
+opt = parser.parse_args()
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = Autoencoder().to(device)
+loss = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+
+for i in range(opt.epochs):
+    optimizer.zero_grad()
+    loss_fn.backward()
+    optimizer.step()
