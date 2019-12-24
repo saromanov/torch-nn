@@ -19,7 +19,6 @@ def to_img(x):
 class Autoencoder(nn.Module):
     def __init__(self, params):
         super(Autoencoder, self).__init__()
-
         self.encoder = nn.Sequential(
             *self._block(params),
         )
@@ -31,14 +30,15 @@ class Autoencoder(nn.Module):
     def _block(self, layers_inp):
         layers = []
         for layer in layers_inp:
-            layers.append(nn.Linear(layer[0], layer[1]))
+            layer_param = nn.Linear(layer[0], layer[1])
+            nn.init.xavier_uniform_(layer_param.weight)
+            layers.append(layer_param)
             layers.append(nn.LeakyReLU(0.2, inplace=True))
         return layers
         
     def forward(self, x):
         x = self.encoder(x)
         return self.decoder(x)
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
