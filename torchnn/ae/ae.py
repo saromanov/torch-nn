@@ -58,7 +58,7 @@ dataloader = torch.utils.data.DataLoader(trainset, batch_size=4,
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = Autoencoder(opt.params).to(device)
-loss = nn.MSELoss()
+loss = nn.SmoothL1Loss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
 for i in range(opt.epochs):
