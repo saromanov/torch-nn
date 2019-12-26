@@ -148,5 +148,7 @@ for epoch in range(opt.epochs):
 
         print('Epoch [{}/{}], d_loss: {:.6f}, g_loss: {:.6f} '
                   'D real: {:.6f}, D fake: {:.6f}'
-                  .format(epoch, num_epoch, d_loss.data[0], g_loss.data[0],
+                  .format(epoch, num_epoch, d_loss.data, g_loss.data,
                           real_scores.data.mean(), fake_scores.data.mean()))
+    fake_images = to_img(fake_img.cpu().data)
+    save_image(fake_images, './dc_img/fake_images-{}.png'.format(epoch+1))
