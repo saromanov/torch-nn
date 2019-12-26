@@ -11,10 +11,10 @@ from torch.autograd import Variable
 class Generator(nn.Module):
     ''' Definition of the generator class
     '''
-    def __init__(self, num_classes, dims, shape):
+    def __init__(self, size, feature):
         super(Generator, self).__init__()
         self._shape = shape
-        self.labels_emb = nn.Embedding(num_classes, num_classes)
+        self.fc = nn.Linear(input_size, num_feature)
         self.model = nn.Sequential(
             nn.BatchNorm2d(1),
             nn.ReLU(True)
@@ -35,11 +35,13 @@ class Generator(nn.Module):
             nn.Tanh()
         )
     
-    def forward(self, noise, labels):
-        gen_input = torch.cat((self.labels_emb(labels), noise), -1)
-        img = self.model(gen_input)
-        img = img.view(img.size(0), *self._shape)
-        return img
+    def forward(self, x):
+        x = self.fc(x)
+        x = x.view(x.size(0), 1, 56, 56)
+        x = self.br(x)
+        x = self.downsample1(x)
+        x = self.downsample2(x)
+        x = self.downsample3(x)
 
 class Discriminator(nn.Module):
     def __init__(self, num_classes, dims, shape):
