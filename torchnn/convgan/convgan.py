@@ -97,4 +97,32 @@ opt = parser.parse_args()
 
 
 for epoch in range(opt.epochs):
-    pass
+    for i, (img, _) in enumerate(trainloader):
+        num_img = img.size(0)
+        real_img = Variable(img).cuda()
+        real_label = Variable(torch.ones(num_img)).cuda()
+        fake_label = Variable(torch.zeros(num_img)).cuda()
+
+        real_out = D(real_img)
+        d_loss_real = criterion(real_out, real_label)
+        real_scores = real_out
+
+        z = Variable(torch.randn(num_img, z_dimension)).cuda()
+        fake_img = G(z)
+        fake_out = D(fake_img)
+        d_loss_fake = criterion(fake_out, fake_label)
+        fake_scores = fake_out
+
+        d_loss = d_loss_real + d_loss_fake
+        d_optimizer.zero_grad()
+        d_loss.backward()
+        d_optimizer.step()
+
+        z = Variable(torch.randn(num_img, z_dimension)).cuda()
+        fake_img = G(z)
+        output = D(fake_img)
+        g_loss = criterion(output, real_label)
+
+        g_optimizer.zero_grad()
+        g_loss.backward()
+        g_optimizer.step()
