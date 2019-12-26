@@ -126,3 +126,8 @@ for epoch in range(opt.epochs):
         g_optimizer.zero_grad()
         g_loss.backward()
         g_optimizer.step()
+
+        print('Epoch [{}/{}], d_loss: {:.6f}, g_loss: {:.6f} '
+                  'D real: {:.6f}, D fake: {:.6f}'
+                  .format(epoch, num_epoch, d_loss.data[0], g_loss.data[0],
+                          real_scores.data.mean(), fake_scores.data.mean()))
