@@ -14,6 +14,13 @@ from utils import to_img
 if not os.path.exists('./dc_img'):
     os.mkdir('./dc_img')
 
+
+def to_img(x):
+    out = 0.5 * (x + 1)
+    out = out.clamp(0, 1)
+    out = out.view(-1, 1, 28, 28)
+    return out
+
 class Generator(nn.Module):
     ''' Definition of the generator class
     '''
@@ -145,5 +152,5 @@ for epoch in range(opt.epochs):
                   'D real: {:.6f}, D fake: {:.6f}'
                   .format(epoch, num_epoch, d_loss.data, g_loss.data,
                           real_scores.data.mean(), fake_scores.data.mean()))
-    fake_images = to_img(fake_img.cpu().data, 28, 28)
+    fake_images = to_img(fake_img.cpu().data)
     save_image(fake_images, './dc_img/fake_images-{}.png'.format(epoch+1))
