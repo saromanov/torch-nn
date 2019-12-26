@@ -44,7 +44,7 @@ class Generator(nn.Module):
         x = self.downsample3(x)
 
 class Discriminator(nn.Module):
-    def __init__(self, num_classes, dims, shape):
+    def __init__(self):
         super(Discriminator, self).__init__()
         self.fc = nn.Sequential(
             nn.Linear(64*7*7, 1024),
@@ -55,7 +55,7 @@ class Discriminator(nn.Module):
         self.conv1 = self._make_conv_layer(1,32,5)
         self.conv2 = self._make_conv_layer(32,64,5)
     
-    def _make_conv_layer(x,y,z):
+    def _make_conv_layer(self, x,y,z):
         return nn.Sequential(
             nn.Conv2d(x, y, z, padding=2),
             nn.LeakyReLU(0.2, True),
@@ -76,8 +76,8 @@ trainset = datasets.MNIST('../data', train=True, download=True,
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
 
-D = discriminator().cuda()
-G = generator(z_dimension, 3136).cuda()
+D = Discriminator().cuda()
+G = Generator(z_dimension, 3136).cuda()
 
 d_optimizer = torch.optim.Adam(D.parameters(), lr=0.0005)
 g_optimizer = torch.optim.Adam(G.parameters(), lr=0.0005)
