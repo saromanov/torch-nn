@@ -1,5 +1,6 @@
 
 import argparse
+import os
 import torch
 from torchvision import datasets
 import torchvision.transforms as transforms
@@ -8,13 +9,26 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 
+if not os.path.exists('./dc_img'):
+    os.mkdir('./dc_img')
+
+
+def to_img(x):
+    out = 0.5 * (x + 1)
+    out = out.clamp(0, 1)
+    out = out.view(-1, 1, 28, 28)
+    return out
+
 class Generator(nn.Module):
     ''' Definition of the generator class
     '''
     def __init__(self, size, feature):
         super(Generator, self).__init__()
-        self._shape = shape
-        self.fc = nn.Linear(input_size, num_feature)
+        self.fc = nn.Linear(size, feature)
+        self.br = nn.Sequential(
+            nn.BatchNorm2d(1),
+            nn.ReLU(True)
+        )
         self.model = nn.Sequential(
             nn.BatchNorm2d(1),
             nn.ReLU(True)
@@ -41,7 +55,7 @@ class Generator(nn.Module):
         x = self.br(x)
         x = self.downsample1(x)
         x = self.downsample2(x)
-        x = self.downsample3(x)
+        return self.downsample3(x)
 
 class Discriminator(nn.Module):
     def __init__(self):
@@ -76,8 +90,13 @@ trainset = datasets.MNIST('../data', train=True, download=True,
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
 
-D = Discriminator().cuda()
-G = Generator(z_dimension, 3136).cuda()
+batch_size = 128
+num_epoch = 100
+z_dimension = 100
+D = Discriminator().to(device)
+G = Generator(z_dimension, 3136).to(device)
+
+loss = nn.BCELoss()
 
 d_optimizer = torch.optim.Adam(D.parameters(), lr=0.0005)
 g_optimizer = torch.optim.Adam(G.parameters(), lr=0.0005)
@@ -99,18 +118,18 @@ opt = parser.parse_args()
 for epoch in range(opt.epochs):
     for i, (img, _) in enumerate(trainloader):
         num_img = img.size(0)
-        real_img = Variable(img).cuda()
-        real_label = Variable(torch.ones(num_img)).cuda()
-        fake_label = Variable(torch.zeros(num_img)).cuda()
+        real_img = Variable(img).to(device)
+        real_label = Variable(torch.ones(num_img)).to(device)
+        fake_label = Variable(torch.zeros(num_img)).to(device)
 
         real_out = D(real_img)
-        d_loss_real = criterion(real_out, real_label)
+        d_loss_real = loss(real_out, real_label)
         real_scores = real_out
 
-        z = Variable(torch.randn(num_img, z_dimension)).cuda()
+        z = Variable(torch.randn(num_img, z_dimension)).to(device)
         fake_img = G(z)
         fake_out = D(fake_img)
-        d_loss_fake = criterion(fake_out, fake_label)
+        d_loss_fake = loss(fake_out, fake_label)
         fake_scores = fake_out
 
         d_loss = d_loss_real + d_loss_fake
@@ -118,10 +137,10 @@ for epoch in range(opt.epochs):
         d_loss.backward()
         d_optimizer.step()
 
-        z = Variable(torch.randn(num_img, z_dimension)).cuda()
+        z = Variable(torch.randn(num_img, z_dimension)).to(device)
         fake_img = G(z)
         output = D(fake_img)
-        g_loss = criterion(output, real_label)
+        g_loss = loss(output, real_label)
 
         g_optimizer.zero_grad()
         g_loss.backward()
