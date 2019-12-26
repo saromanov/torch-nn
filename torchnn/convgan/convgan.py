@@ -66,3 +66,16 @@ class Discriminator(nn.Module):
         x = self.conv1(x)
         x = self.conv2(x)
         return self.fc(x.view(x.size(0), -1))
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+trainset = datasets.MNIST('../data', train=True, download=True,
+                       transform=transforms.Compose([
+                           transforms.ToTensor()
+                       ]))
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+                                          shuffle=True, num_workers=2)
+
+D = discriminator().cuda()
+G = generator(z_dimension, 3136).cuda()
+
