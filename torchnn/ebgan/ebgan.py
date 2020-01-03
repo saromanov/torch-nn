@@ -19,7 +19,18 @@ class Discriminator(nn.Module):
             nn.Conv2d(opt.channels, 64, 3, 2, 1),
             nn.ReLU()
         )
-         self.embedding = nn.Linear(down_dim, 32)
+        dim := self._create_down(size)
+        self.embedding = nn.Linear(dim, 32)
+        self.fc = nn.Sequential(
+            nn.BatchNorm1d(32, 0.8),
+            nn.ReLU(inplace=True),
+            nn.Linear(32, dim),
+            nn.BatchNorm1d(dim),
+            nn.ReLU(inplace=True),
+        )
+    
+    def _create_down(self, size):
+        return 64 * (opt.img_size // 2) ** 2 
     
     def forward(self, img, labels):
        pass
