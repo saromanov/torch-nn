@@ -50,7 +50,10 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
         self._input_size = input_size
         self._size = size // 4
-        self.l1 = nn.Sequential(nn.Linear(dims, self._input_size * self._size ** 2))
+        self.l1 = nn.Sequential(
+            nn.Linear(dims, self._input_size * self._size),
+            nn.Linear(self._input_size * self._size, self._input_size * self._size ** 2),
+            )
         self.l2 = nn.Sequential(
             *self._block(self._input_size,128,3),
             *self._block(128,64,3),
