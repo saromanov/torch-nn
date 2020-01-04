@@ -108,6 +108,7 @@ optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.d1,
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.d1, opt.d2))
 
 lambda_pt = 0.1
+margin = max(1, opt.batch_size / 64.0)
 for epoch in range(opt.epochs):
     for i, (imgs, _) in enumerate(trainloader):
         batch_size = imgs.shape[0]
@@ -121,15 +122,18 @@ for epoch in range(opt.epochs):
 
         g_loss = pixelwise_loss(recon_imgs, gen_imgs.detach()) + lambda_pt * pullaway_loss(img_embeddings)
 
-        optimizer_D.zero_grad()
         g_loss.backward()
+        optimizer_G.step()
+        optimizer_D.zero_grad()
+        
+        disk_images,_ = discriminator(real)
+        validity_fake,_ = discriminator(gen_imgs.detach())
+        a_loss_real = pixelwise_loss(disk_images, real)
+        a_loss_fake = pixelwise_loss(validity_fake, gen_imgs.detach())
 
-        disk_images = discriminator(real)
-        validity_fake = discriminator(gen_imgs.detach())
-        a_loss_real = pixelwise_loss(recon_imgs, gen_imgs.detach()) + lambda_pt * pullaway_loss(img_embeddings)
-        a_loss_fake = pixelwise_loss(recon_imgs, gen_imgs.detach()) + lambda_pt * pullaway_loss(img_embeddings)
-
-        d_loss = (a_loss_real + a_loss_fake) / 2
+        d_loss = a_loss_real
+        if (margin - a_loss_fake.data).item() > 0:
+            d_loss += margin - a_loss_fake
 
         d_loss.backward()
         optimizer_D.step()
