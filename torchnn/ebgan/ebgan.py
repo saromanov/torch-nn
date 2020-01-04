@@ -97,21 +97,21 @@ for epoch in range(opt.epochs):
     for i, (imgs, _) in enumerate(trainloader):
         batch_size = imgs.shape[0]
 
-        valid = Variable(torch.FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
-        fake = Variable(torch.FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
-        img = Variable(imgs.type(torch.FloatTensor))
+        real = Variable(imgs.type(torch.FloatTensor))
         optimizer_G.zero_grad()
 
         z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, opt.latent_dim))))
         gen_imgs = generator(z)
         validity = discriminator(gen_imgs)
+
         g_loss = adversarial_loss(validity, valid)
 
         optimizer_D.zero_grad()
-        disk_images = discriminator(img)
-        a_loss_real = adversarial_loss(validity, valid)
+        g_loss.backward()
 
+        disk_images = discriminator(real)
         validity_fake = discriminator(gen_imgs.detach())
+        a_loss_real = adversarial_loss(validity, valid)
         a_loss_fake = adversarial_loss(validity_fake, fake)
 
         d_loss = (a_loss_real + a_loss_fake) / 2
