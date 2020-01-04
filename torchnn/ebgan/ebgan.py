@@ -24,12 +24,13 @@ class Discriminator(nn.Module):
             nn.ReLU()
         )
         self._dim = self._create_down(size)
-        self.embedding = nn.Linear(dim, 32)
+        self._down_size = opt.img_size // 2
+        self.embedding = nn.Linear(self._dim, 32)
         self.fc = nn.Sequential(
             nn.BatchNorm1d(32, 0.8),
             nn.ReLU(inplace=True),
-            nn.Linear(32, dim),
-            nn.BatchNorm1d(dim),
+            nn.Linear(32, self._dim),
+            nn.BatchNorm1d(self._dim),
             nn.ReLU(inplace=True),
         )
         self.up = nn.Sequential(nn.Upsample(scale_factor=2), nn.Conv2d(64, opt.channels, 3, 1, 1))
@@ -41,7 +42,7 @@ class Discriminator(nn.Module):
        out = self._downsampling(img)
        embedding = self.embedding(out.view(out.size(0), -1))
        out = self.fc(embedding)
-       out = self.up(out.view(out.size(0), 64, self._dim, self._dim))
+       out = self.up(out.view(out.size(0), 64, self._down_size, self._down_size))
        return out, embedding
 
 class Generator(nn.Module):
@@ -89,7 +90,7 @@ parser.add_argument("--img_size", type=int, default=32, help="size of each image
 opt = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-adversarial_loss = torch.nn.MSELoss()
+pixelwise_loss = torch.nn.MSELoss()
 generator = Generator(opt.channels, opt.latent_dim, opt.img_size)
 discriminator = Discriminator(opt.channels, opt.img_size)
 
