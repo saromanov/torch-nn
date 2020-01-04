@@ -36,7 +36,11 @@ class Discriminator(nn.Module):
         return 64 * (opt.img_size // 2) ** 2 
     
     def forward(self, img, labels):
-       pass
+       out = self.down(img)
+       embedding = self.embedding(out.view(out.size(0), -1))
+       out = self.fc(embedding)
+       out = self.up(out.view(out.size(0), 64, self.down_size, self.down_size))
+       return out, embedding
 
 class Generator(nn.Module):
     def __init__(self, channels, dims, size):
