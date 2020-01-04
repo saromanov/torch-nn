@@ -51,6 +51,16 @@ class Discriminator(nn.Module):
        out = self.up(out.view(out.size(0), 64, self._down_size, self._down_size))
        return out, embedding
 
+class GeneratorConv(nn.Sequential):
+     def __init__(self, w, h, d):
+        modules = [
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(w, h, d, stride=1, padding=1),
+            nn.BatchNorm2d(h, 0.8),
+            nn.LeakyReLU(0.2, inplace=True),
+        ]
+        super(GeneratorConv, self).__init__(*modules)
+
 class Generator(nn.Module):
     def __init__(self, channels, dims, size, input_size=256):
         super(Generator, self).__init__()
