@@ -1,4 +1,5 @@
 import argparse
+import os
 import torch
 from torchvision import datasets
 import torchvision.transforms as transforms
@@ -22,7 +23,7 @@ class Discriminator(nn.Module):
             nn.Conv2d(opt.channels, 64, 3, 2, 1),
             nn.ReLU()
         )
-        dim := self._create_down(size)
+        dim = self._create_down(size)
         self.embedding = nn.Linear(dim, 32)
         self.fc = nn.Sequential(
             nn.BatchNorm1d(32, 0.8),
@@ -45,7 +46,7 @@ class Discriminator(nn.Module):
 class Generator(nn.Module):
     def __init__(self, channels, dims, size):
         super(Generator, self).__init__()
-        self._size = size
+        self._size = size // 4
         self.l1 = nn.Sequential(nn.Linear(dims, 128 * (opt.img_size // 4) ** 2))
         self.l2 = nn.Sequential(
             *self._block(128,128,3),
@@ -57,7 +58,7 @@ class Generator(nn.Module):
         return [
             nn.Upsample(scale_factor=2),
             nn.Conv2d(w, h, d, stride=1, padding=1),
-            nn.BatchNorm2d(s, 0.8),
+            nn.BatchNorm2d(w, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
             ]
     def forward(self, noise):
@@ -88,8 +89,8 @@ opt = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 adversarial_loss = torch.nn.MSELoss()
-generator = Generator(opt.classes, opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
-discriminator = Discriminator(opt.classes, opt.latent_dim, (opt.channels, opt.img_size, opt.img_size))
+generator = Generator(opt.channels, opt.latent_dim, opt.img_size)
+discriminator = Discriminator(opt.channels, opt.img_size)
 
 trainset = datasets.MNIST('../data', train=True, download=True,
                        transform=transforms.Compose([
