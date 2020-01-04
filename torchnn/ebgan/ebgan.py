@@ -35,6 +35,23 @@ class Discriminator(nn.Module):
     def forward(self, img, labels):
        pass
 
+class Generator(nn.Module):
+    def __init__(self, channels):
+        super(Generator, self).__init__()
+        self.model = nn.Sequential(
+            *self._block(128,128,3),
+            *self._block(128,64,3),
+            nn.Conv2d(64, channels, 3, stride=1, padding=1),
+            nn.Tanh(),
+        )
+    def _block(self, w,h,d):
+        return [
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(w, h, d, stride=1, padding=1),
+            nn.BatchNorm2d(s, 0.8),
+            nn.LeakyReLU(0.2, inplace=True),
+            ]
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
