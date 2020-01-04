@@ -46,12 +46,13 @@ class Discriminator(nn.Module):
        return out, embedding
 
 class Generator(nn.Module):
-    def __init__(self, channels, dims, size):
+    def __init__(self, channels, dims, size, input_size=256):
         super(Generator, self).__init__()
+        self._input_size = input_size
         self._size = size // 4
-        self.l1 = nn.Sequential(nn.Linear(dims, 128 * self._size ** 2))
+        self.l1 = nn.Sequential(nn.Linear(dims, self._input_size * self._size ** 2))
         self.l2 = nn.Sequential(
-            *self._block(128,128,3),
+            *self._block(self._input_size,128,3),
             *self._block(128,64,3),
             nn.Conv2d(64, channels, 3, stride=1, padding=1),
             nn.Tanh(),
@@ -65,7 +66,7 @@ class Generator(nn.Module):
             ]
     def forward(self, noise):
         out = self.l1(noise)
-        out = out.view(out.shape[0], 128, self._size, self._size)
+        out = out.view(out.shape[0], self._input_size, self._size, self._size)
         return self.l2(out)
 
 def pullaway_loss(embeddings):
@@ -86,7 +87,7 @@ parser.add_argument("--cpus", type=int, default=8, help="number of cpu threads t
 parser.add_argument("--latent_dim", type=int, default=100, help="dimensionality of the latent space")
 parser.add_argument("--classes", type=int, default=10, help="number of classes for dataset")
 parser.add_argument("--channels", type=int, default=1, help="image channels")
-parser.add_argument("--img_size", type=int, default=32, help="size of each image dimension")
+parser.add_argument("--img_size", type=int, default=8, help="size of each image dimension")
 opt = parser.parse_args()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -103,6 +104,7 @@ trainset = datasets.MNIST('../data', train=True, download=True,
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
 
+print(trainset[0][0].size())
 
 optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.d1, opt.d2))
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.d1, opt.d2))
