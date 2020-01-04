@@ -36,9 +36,11 @@ class Discriminator(nn.Module):
        pass
 
 class Generator(nn.Module):
-    def __init__(self, channels):
+    def __init__(self, channels, dims, size):
         super(Generator, self).__init__()
-        self.model = nn.Sequential(
+        self._size = size
+        self.l1 = nn.Sequential(nn.Linear(dims, 128 * (opt.img_size // 4) ** 2))
+        self.l2 = nn.Sequential(
             *self._block(128,128,3),
             *self._block(128,64,3),
             nn.Conv2d(64, channels, 3, stride=1, padding=1),
@@ -51,6 +53,10 @@ class Generator(nn.Module):
             nn.BatchNorm2d(s, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
             ]
+    def forward(self, noise):
+        out = self.l1(noise)
+        out = out.view(out.shape[0], 128, self._size, self._size)
+        return self.l2(out)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
