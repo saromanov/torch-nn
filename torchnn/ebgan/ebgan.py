@@ -23,7 +23,7 @@ class Discriminator(nn.Module):
             nn.Conv2d(opt.channels, 64, 3, 2, 1),
             nn.ReLU()
         )
-        dim = self._create_down(size)
+        self._dim = self._create_down(size)
         self.embedding = nn.Linear(dim, 32)
         self.fc = nn.Sequential(
             nn.BatchNorm1d(32, 0.8),
@@ -32,22 +32,23 @@ class Discriminator(nn.Module):
             nn.BatchNorm1d(dim),
             nn.ReLU(inplace=True),
         )
+        self.up = nn.Sequential(nn.Upsample(scale_factor=2), nn.Conv2d(64, opt.channels, 3, 1, 1))
     
     def _create_down(self, size):
         return 64 * (opt.img_size // 2) ** 2 
     
-    def forward(self, img, labels):
-       out = self.down(img)
+    def forward(self, img):
+       out = self._downsampling(img)
        embedding = self.embedding(out.view(out.size(0), -1))
        out = self.fc(embedding)
-       out = self.up(out.view(out.size(0), 64, self.down_size, self.down_size))
+       out = self.up(out.view(out.size(0), 64, self._dim, self._dim))
        return out, embedding
 
 class Generator(nn.Module):
     def __init__(self, channels, dims, size):
         super(Generator, self).__init__()
         self._size = size // 4
-        self.l1 = nn.Sequential(nn.Linear(dims, 128 * (opt.img_size // 4) ** 2))
+        self.l1 = nn.Sequential(nn.Linear(dims, 128 * self._size ** 2))
         self.l2 = nn.Sequential(
             *self._block(128,128,3),
             *self._block(128,64,3),
@@ -58,7 +59,7 @@ class Generator(nn.Module):
         return [
             nn.Upsample(scale_factor=2),
             nn.Conv2d(w, h, d, stride=1, padding=1),
-            nn.BatchNorm2d(w, 0.8),
+            nn.BatchNorm2d(h, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
             ]
     def forward(self, noise):
@@ -115,7 +116,7 @@ for epoch in range(opt.epochs):
 
         z = Variable(torch.FloatTensor(np.random.normal(0, 1, (batch_size, opt.latent_dim))))
         gen_imgs = generator(z)
-        validity = discriminator(gen_imgs)
+        recon_imgs, img_embeddings = discriminator(gen_imgs)
 
         g_loss = pixelwise_loss(recon_imgs, gen_imgs.detach()) + lambda_pt * pullaway_loss(img_embeddings)
 
