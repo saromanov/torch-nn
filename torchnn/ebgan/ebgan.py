@@ -61,6 +61,14 @@ class Generator(nn.Module):
         out = out.view(out.shape[0], 128, self._size, self._size)
         return self.l2(out)
 
+def pullaway_loss(embeddings):
+    norm = torch.sqrt(torch.sum(embeddings ** 2, -1, keepdim=True))
+    normalized_emb = embeddings / norm
+    similarity = torch.matmul(normalized_emb, normalized_emb.transpose(1, 0))
+    batch_size = embeddings.size(0)
+    loss_pt = (torch.sum(similarity) - batch_size) / (batch_size * (batch_size - 1))
+    return loss_pt
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
@@ -104,15 +112,15 @@ for epoch in range(opt.epochs):
         gen_imgs = generator(z)
         validity = discriminator(gen_imgs)
 
-        g_loss = adversarial_loss(validity, valid)
+        g_loss = pixelwise_loss(recon_imgs, gen_imgs.detach()) + lambda_pt * pullaway_loss(img_embeddings)
 
         optimizer_D.zero_grad()
         g_loss.backward()
 
         disk_images = discriminator(real)
         validity_fake = discriminator(gen_imgs.detach())
-        a_loss_real = adversarial_loss(validity, valid)
-        a_loss_fake = adversarial_loss(validity_fake, fake)
+        a_loss_real = pixelwise_loss(recon_imgs, gen_imgs.detach()) + lambda_pt * pullaway_loss(img_embeddings)
+        a_loss_fake = pixelwise_loss(recon_imgs, gen_imgs.detach()) + lambda_pt * pullaway_loss(img_embeddings)
 
         d_loss = (a_loss_real + a_loss_fake) / 2
 
