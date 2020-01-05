@@ -67,16 +67,20 @@ class GeneratorConv(nn.Sequential):
         ]
         super(GeneratorConv, self).__init__(*modules)
 
+class Linear(nn.Sequential):
+    def __init__(self, layers):
+        data = list(map(lambda x: nn.Linear(x[0], x[1]), layers))
+        print(data)
+        super(Linear, self).__init__(*data)
+
 class Generator(nn.Module):
     def __init__(self, channels, dims, size, input_size=256):
         super(Generator, self).__init__()
         self._input_size = input_size
         self._size = size // 4
-        self.l1 = nn.Sequential(
-            nn.Linear(dims, self._input_size * self._size),
-            nn.Linear(self._input_size * self._size, self._input_size * self._size ** 2),
-            )
+        self.l1 = Linear([(dims, self._input_size * self._size), (self._input_size * self._size, self._input_size * self._size ** 2)])
         self.l2 = GeneratorConv(self._input_size, 128, 3,128,64,3, channels)
+
     def _block(self, w,h,d):
         return [
             nn.Upsample(scale_factor=2),
