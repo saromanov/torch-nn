@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets
 import torchvision.transforms as transforms
+from torchnn.utils import to_img
 
 class NN(nn.Module):
     def __init__(self, inp, hidd, out):
@@ -14,7 +15,7 @@ class NN(nn.Module):
         )
     
     def _make_module(self, inNum, outNum):
-        return [nn.Linear(inNum,outNum), nn.LeakyReLU(0.2)]
+        return [nn.Linear(inNum,outNum), nn.ReLU(0.5)]
     
     def forward(self, x):
         return self.model(x)
