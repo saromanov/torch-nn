@@ -52,12 +52,18 @@ class Discriminator(nn.Module):
        return out, embedding
 
 class GeneratorConv(nn.Sequential):
-     def __init__(self, w, h, d):
+     def __init__(self, w, h, d, w2, h2, d2, channels):
         modules = [
             nn.Upsample(scale_factor=2),
             nn.Conv2d(w, h, d, stride=1, padding=1),
             nn.BatchNorm2d(h, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
+            nn.Upsample(scale_factor=2),
+            nn.Conv2d(w2, h2, d2, stride=1, padding=1),
+            nn.BatchNorm2d(h2, 0.8),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(64, channels, 3, stride=1, padding=1),
+            nn.Tanh(),
         ]
         super(GeneratorConv, self).__init__(*modules)
 
@@ -70,12 +76,7 @@ class Generator(nn.Module):
             nn.Linear(dims, self._input_size * self._size),
             nn.Linear(self._input_size * self._size, self._input_size * self._size ** 2),
             )
-        self.l2 = nn.Sequential(
-            *self._block(self._input_size,128,3),
-            *self._block(128,64,3),
-            nn.Conv2d(64, channels, 3, stride=1, padding=1),
-            nn.Tanh(),
-        )
+        self.l2 = GeneratorConv(self._input_size, 128, 3,128,64,3, channels)
     def _block(self, w,h,d):
         return [
             nn.Upsample(scale_factor=2),
@@ -170,3 +171,6 @@ trainset = datasets.MNIST('../data', train=True, download=True,
                        ]))
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
+
+ebg = EBGAN()
+ebg.train(opt.epochs)
