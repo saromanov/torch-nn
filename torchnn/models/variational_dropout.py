@@ -8,7 +8,7 @@ class VariationalDropout(nn.Module):
         self.dropout = dropout
         self.batch_first = batch_first
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         if not self.training or self.dropout <= 0.:
             return x
 
